@@ -5,8 +5,9 @@ import { logActivity } from '../../utils/logger';
 
 export class AuthService {
   async login(email: string, password: string, ipAddress?: string) {
+    const normalizedEmail = email.trim().toLowerCase();
     const admin = await prisma.admin.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!admin) {
