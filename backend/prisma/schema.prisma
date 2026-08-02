@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum AdminRole {
+  ADMIN
+  STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  MAINTENANCE
+  RESERVED
+}
+
+enum RoomType {
+  SINGLE
+  DOUBLE
+  TRIPLE
+  SUITE
+  DELUXE
+  FAMILY
+  MONTHLY
+}
+
+enum BookingStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum DocumentType {
+  AADHAAR_FRONT
+  AADHAAR_BACK
+  PHOTO
+  SIGNATURE
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model Lodge {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rooms    Room[]
+  guests   Guest[]
+  bookings Booking[]
+
+  @@map("lodges")
+}
+
+model Admin {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      AdminRole @default(ADMIN)
+  lastLogin DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  createdBy String?
+  updatedBy String?
+
+  activityLogs ActivityLog[]
+
+  @@map("admins")
+}
+
+model Guest {
+  id               String   @id @default(uuid())
+  lodgeId          String?
+  name             String
+  fatherName       String?
+  address          String
+  phone            String
+  altPhone         String?
+  gender           Gender
+  age              Int
+  occupation       String?
+  nationality      String   @default("Indian")
+  purposeOfVisit   String?
+  adults           Int      @default(1)
+  children         Int      @default(0)
+  vehicleNumber    String?
+  emergencyContact String?
+  email            String?
+  aadhaarNumber    String?
+  passportNumber   String?
+  remarks          String?
+  internalNotes    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  lodge     Lodge?          @relation(fields: [lodgeId], references: [id], onDelete: SetNull)
+  documents GuestDocument[]
+  bookings  Booking[]
+
+  @@index([lodgeId])
+  @@index([name])
+  @@index([phone])
+  @@index([aadhaarNumber])
+  @@index([createdAt])
+  @@map("guests")
+}
+
+model Room {
+  id               String     @id @default(uuid())
+  lodgeId          String
+  roomNumber       String
+  roomType         RoomType   @default(DOUBLE)
+  isAC             Boolean    @default(false)
+  floor            Int        @default(0)
+  price            Float
+  dailyPrice       Float?
+  monthlyPrice     Float?
+  maxOccupancy     Int        @default(2)
+  extraGuestCharge Float      @default(0)
+  status           RoomStatus @default(AVAILABLE)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  lodge    Lodge     @relation(fields: [lodgeId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([lodgeId, roomNumber])
+  @@index([lodgeId])
+  @@index([status])
+  @@index([roomNumber])
+  @@map("rooms")
+}
+
+model Booking {
+  id                   String        @id @default(uuid())
+  lodgeId              String?
+  guestId              String
+  roomId               String
+  arrivalDate          DateTime
+  arrivalTime          String
+  expectedCheckoutDate DateTime
+  expectedCheckoutTime String
+  departureDate        DateTime?
+  departureTime        String?
+  numberOfDays         Int           @default(1)
+  guestCount           Int           @default(1)
+  baseRoomRent         Float         @default(0)
+  extraGuestCharge     Float         @default(0)
+  lateCheckoutCharges  Float         @default(0)
+  roomRent             Float
+  extraCharges         Float         @default(0)
+  discount             Float         @default(0)
+  totalAmount          Float         @default(0)
+  advanceAmount        Float         @default(0)
+  remarks              String?
+  status               BookingStatus @default(CHECKED_IN)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  createdBy            String?
+  updatedBy            String?
+
+  lodge   Lodge?   @relation(fields: [lodgeId], references: [id], onDelete: SetNull)
+  guest   Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  room    Room     @relation(fields: [roomId], references: [id], onDelete: Restrict)
+
+  @@index([lodgeId])
+  @@index([guestId])
+  @@index([roomId])
+  @@index([status])
+  @@index([arrivalDate])
+  @@index([departureDate])
+  @@map("bookings")
+}
+
+model GuestDocument {
+  id                 String       @id @default(uuid())
+  guestId            String
+  documentType       DocumentType
+  fileUrl            String
+  cloudinaryPublicId String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([guestId])
+  @@map("guest_documents")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Settings {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
