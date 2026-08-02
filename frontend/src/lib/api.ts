@@ -1,29 +1,13 @@
 import axios from 'axios';
 
-const getApiUrl = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return `${window.location.origin}/api`;
-  }
-  return 'http://localhost:5000/api';
-};
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export const api = axios.create({
-  baseURL: getApiUrl(),
+  baseURL: API_URL,
   withCredentials: true, // For httpOnly cookies
   headers: {
     'Content-Type': 'application/json',
   },
-});
-
-// Update baseURL dynamically on request if window is available
-api.interceptors.request.use((config) => {
-  if (!process.env.NEXT_PUBLIC_API_URL && typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    config.baseURL = `${window.location.origin}/api`;
-  }
-  return config;
 });
 
 // Interceptor to attach JWT access token

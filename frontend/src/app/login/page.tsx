@@ -22,6 +22,8 @@ export default function LoginPage() {
     } catch (err: any) {
       if (!err.response) {
         setError('Cannot connect to backend server. Ensure backend is running on http://localhost:5000');
+      } else if (err.response.status === 404) {
+        setError('Backend API not found (404). Check backend server deployment or run locally on http://localhost:5000');
       } else {
         const msg = err.response?.data?.message || 'Invalid email or password';
         setError(msg);
