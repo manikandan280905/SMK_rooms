@@ -193,6 +193,26 @@ export class ReportService {
       orderBy: { departureDate: 'desc' },
     });
   }
+
+  async getPendingPayments(lodgeId?: string) {
+    const where: any = {
+      status: BookingStatus.CHECKED_IN,
+    };
+
+    if (lodgeId && lodgeId !== 'ALL') {
+      where.lodgeId = lodgeId;
+    }
+
+    return prisma.booking.findMany({
+      where,
+      include: {
+        lodge: true,
+        guest: { select: { id: true, name: true, phone: true } },
+        room: { select: { id: true, roomNumber: true, price: true } },
+      },
+      orderBy: { arrivalDate: 'asc' },
+    });
+  }
 }
 
 export const reportService = new ReportService();
