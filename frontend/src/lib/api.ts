@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const getApiUrl = () => {
+export const getApiUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
@@ -10,19 +10,17 @@ const getApiUrl = () => {
   return 'http://localhost:5000/api';
 };
 
-export const API_URL = getApiUrl();
-
 export const api = axios.create({
-  baseURL: API_URL,
   withCredentials: true, // For httpOnly cookies
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor to attach JWT access token
+// Interceptor to attach baseURL and JWT access token dynamically
 api.interceptors.request.use(
   (config) => {
+    config.baseURL = getApiUrl();
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken');
       if (token) {
@@ -72,7 +70,7 @@ api.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          `${API_URL}/auth/refresh-token`,
+          `${getApiUrl()}/auth/refresh-token`,
           {},
           { withCredentials: true }
         );
