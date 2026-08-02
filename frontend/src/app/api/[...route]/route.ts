@@ -1,4 +1,4 @@
-import app from '../../../../../backend/src/app';
+import app from '../../../backend/app';
 import { NextRequest, NextResponse } from 'next/server';
 import { IncomingMessage, ServerResponse } from 'http';
 import { Socket } from 'net';
